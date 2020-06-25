@@ -28,8 +28,6 @@ extension Reducer {
       category: "Reducer Instrumentation"
     )
   ) -> Self {
-    guard log.signpostsEnabled else { return self }
-
     // NB: Prevent rendering as "N/A" in Instruments
     let zeroWidthSpace = "\u{200B}"
 
@@ -37,19 +35,13 @@ extension Reducer {
 
     return Self { state, action, environment in
       var actionOutput: String!
-      if log.signpostsEnabled {
         actionOutput = debugCaseOutput(action)
-        os_signpost(.begin, log: log, name: "Action", "%s%s", prefix, actionOutput)
-      }
+        os_log("Action %s%s", prefix, actionOutput)
       let effects = self.run(&state, action, environment)
-      if log.signpostsEnabled {
-        os_signpost(.end, log: log, name: "Action")
         return
           effects
           .effectSignpost(prefix, log: log, actionOutput: actionOutput)
           .eraseToEffect()
-      }
-      return effects
     }
   }
 }
@@ -60,25 +52,21 @@ extension ObservableType {
     log: OSLog,
     actionOutput: String
   ) -> Observable<Element> {
-    let sid = OSSignpostID(log: log)
 
     return
       self
       .do(
         onNext: { _ in
-          os_signpost(
-            .event, log: log, name: "Effect Output", "%sOutput from %s", prefix, actionOutput)
+            os_log("Effect Output: %sOutput from %s", prefix, actionOutput)
         },
         onCompleted: {
-          os_signpost(.end, log: log, name: "Effect", signpostID: sid, "%sFinished", prefix)
+            os_log("Effect %sFinished", prefix)
         },
         onSubscribe: {
-          os_signpost(
-            .begin, log: log, name: "Effect", signpostID: sid, "%sStarted from %s", prefix,
-            actionOutput)
+            os_log("Effect %sStarted from %s", prefix)
         },
         onDispose: {
-          os_signpost(.end, log: log, name: "Effect", signpostID: sid, "%sCancelled", prefix)
+            os_log("Effect %sCancelled", prefix)
         }
       )
   }
