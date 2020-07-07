@@ -1,4 +1,4 @@
-// swift-tools-version:5.1
+// swift-tools-version:5.2
 
 import PackageDescription
 
@@ -25,13 +25,16 @@ let package = Package(
     .target(
       name: "ComposableArchitecture",
       dependencies: [
-        "CasePaths", "RxSwift", "RxRelay",
+        .product(name: "CasePaths", package: "swift-case-paths"),
+        .product(name: "RxSwift", package: "RxSwift"),
+        .product(name: "RxRelay", package: "RxSwift")
       ]
     ),
     .testTarget(
       name: "ComposableArchitectureTests",
       dependencies: [
-        "ComposableArchitecture", "RxTest",
+        "ComposableArchitecture",
+        .product(name: "RxTest", package: "RxSwift")
       ]
     ),
   ]
